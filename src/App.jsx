@@ -1,45 +1,52 @@
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 
+// Import des composants globaux
+import Header from './components/Header';
+import Footer from './components/Footer';
 
+// Import des pages
+import HomePage from './pages/HomePage';
+import CatalogPage from './pages/CatalogPage';
+import ProductDetailPage from './pages/ProductDetailPage';
+import CartPage from './pages/CartPage';
+import LoginPage from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage';
+import ProfilePage from './pages/ProfilePage';
+import OrdersPage from './pages/OrdersPage';
+import NotFound from './pages/NotFound';
 
-import Footer from "./components/Footer";
+function App() {
+  return (
+    <Router>
+      <div className="app-container">
+        {/* Le Header s'affichera sur toutes les pages */}
+        <Header />
 
+        <main className="main-content">
+          <Routes>
+            {/* Routes publiques */}
+            <Route path="/" element={<HomePage />} />
+            <Route path="/catalog" element={<CatalogPage />} />
+            <Route path="/product/:id" element={<ProductDetailPage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
+            
+            {/* Routes privées (exemple) */}
+            <Route path="/cart" element={<CartPage />} />
+            <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/orders" element={<OrdersPage />} />
 
-import HomePage from "./pages/HomePage";
-import CatalogPage from "./pages/CatalogPage";
-import ProductDetailPage from "./pages/ProductDetailPage";
-import CartPage from "./pages/CartPage";
-import LoginPage from "./pages/LoginPage";
-import RegisterPage from "./pages/RegisterPage";
-import OrdersPage from "./pages/OrdersPage";
-import ProfilePage from "./pages/ProfilePage";
-import NotFound from "./pages/NotFound";
+            {/* Page 404 - Doit toujours être en dernier */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </main>
 
-const App = () => (
-  <BrowserRouter>
-    <AuthProvider>
-      <CartProvider>
-        <AlertProvider>
-          <div className="app-shell">
-            <Navbar />
-            <main className="app-main">
-              <Routes>
-                <Route path="/" element={<HomePage />} />
-                <Route path="/catalog" element={<CatalogPage />} />
-                <Route path="/product/:id" element={<ProductDetailPage />} />
-                <Route path="/login" element={<LoginPage />} />
-                <Route path="/register" element={<RegisterPage />} />
-                <Route path="/cart" element={<ProtectedRoute><CartPage /></ProtectedRoute>} />
-                <Route path="/orders" element={<ProtectedRoute><OrdersPage /></ProtectedRoute>} />
-                <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </main>
-            <Footer />
-          </div>
-        </AlertProvider>
-      </CartProvider>
-    </AuthProvider>
-  </BrowserRouter>
-);
+        {/* Le Footer s'affichera sur toutes les pages */}
+        <Footer />
+      </div>
+    </Router>
+  );
+}
 
 export default App;

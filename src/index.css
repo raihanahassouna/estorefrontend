@@ -1,0 +1,26 @@
+:root {
+  --primary-dark: #0F2B3D;      /* Bleu marine plus profond */
+  --primary: #1E4A6F;            /* Bleu moyen élégant */
+  --accent: #2B6CB0;             /* Bleu électrique vibrant */
+  --accent-light: #4299E1;       /* Bleu clair pour hover */
+  --gray-dark: #2D3748;          /* Gris foncé pour textes */
+  --gray: #4A5568;               /* Gris moyen */
+  --gray-light: #A0AEC0;         /* Gris clair */
+  --bg-light: #F7FAFC;           /* Fond blanc cassé */
+  --bg-white: #FFFFFF;           /* Blanc pur */
+  --success: #38A169;            /* Vert succès */
+  --warning: #DD6B20;            /* Orange warning */
+  --error: #E53E3E;              /* Rouge erreur */
+}
+
+body {
+  background-color: var(--bg-main);
+  color: var(--text-dark);
+  font-family: 'Inter', sans-serif;
+  margin: 0;
+}
+.product-card-hover:hover {
+  transform: translateY(-5px);
+  border-color: #d4ff70 !important;
+  box-shadow: 0 15px 30px rgba(0,0,0,0.08);
+}
