@@ -1,0 +1,41 @@
+/* --- GLOBAL VARIABLES --- */
+:root {
+  --primary-dark: #1a1a1a;   /* Change to your brand dark color */
+  --accent: #ff4757;         /* Change to your brand accent color */
+  --surface: #ffffff;
+  --text-primary: #333333;
+  --transition: all 0.3s ease;
+  --radius-sm: 4px;
+}
+
+/* --- FONTS --- */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap');
+
+/* --- RESET & BASE --- */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'DM Sans', sans-serif;
+}
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap');
+
+.footer { background: var(--primary-dark); color: rgba(255,255,255,0.7); padding: 60px 0 0; margin-top: 60px; }
+.footer-grid { display: grid; grid-template-columns: 1.5fr 1fr 1fr 1.5fr; gap: 32px; padding-bottom: 40px; }
+@media (max-width: 992px) { .footer-grid { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 576px) { .footer-grid { grid-template-columns: 1fr; } }
+.footer-col h4 { color: white; margin-bottom: 16px; font-size: 1rem; }
+.footer-col a, .footer-col p { color: rgba(255,255,255,0.7); display: block; margin-bottom: 8px; transition: var(--transition); font-size: 0.9rem; }
+.footer-col a:hover { color: white; }
+.footer-col.links a:hover { color: var(--surface); }
+.footer-col.cats a:hover { color: var(--accent); }
+.footer-brand-logo { color: white; font: 700 1.5rem 'Plus Jakarta Sans'; margin-bottom: 12px; }
+.social-icons { display: flex; gap: 10px; margin-top: 14px; }
+.social-icons a { width: 36px; height: 36px; background: white; color: var(--primary-dark); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; margin: 0; }
+.footer-newsletter { display: flex; gap: 8px; margin-top: 12px; }
+.footer-newsletter input { background: white; border: none; padding: 10px 12px; border-radius: var(--radius-sm); flex: 1; font-size: 0.85rem; color: var(--text-primary); }
+.footer-newsletter button { background: var(--accent); border: none; color: white; padding: 10px 16px; border-radius: var(--radius-sm); font-weight: 600; }
+.footer-bottom { border-top: 1px solid rgba(255,255,255,0.1); padding: 18px 0; text-align: center; color: rgba(255,255,255,0.5); font-size: 0.85rem; }
