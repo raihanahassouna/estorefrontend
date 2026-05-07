@@ -15,9 +15,20 @@ const CatalogPage = () => {
   const [addedToCart, setAddedToCart]         = useState({});
   const [addedToFavorites, setAddedToFavorites] = useState({});
   const [favorites, setFavorites]             = useState([]);
+  
+  // État pour la notification toast
+  const [toast, setToast] = useState({ show: false, message: '', type: '' });
 
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Fonction pour afficher une notification temporaire
+  const showToast = (message, type = 'success') => {
+    setToast({ show: true, message, type });
+    setTimeout(() => {
+      setToast({ show: false, message: '', type: '' });
+    }, 2000);
+  };
 
   useEffect(() => {
     Promise.all([
@@ -27,16 +38,12 @@ const CatalogPage = () => {
       .then(([productsData, categoriesData]) => {
         const prods = productsData || [];
         setProducts(prods);
-
-        // ── FIX 1: build categories from products if the service returns nothing ──
         if (categoriesData && categoriesData.length > 0) {
           setCategories(categoriesData);
         } else {
-          // Derive unique categories from the `categoryName` field returned by the API
           const unique = [...new Set(prods.map(p => p.categoryName).filter(Boolean))];
           setCategories(unique.map(name => ({ name })));
         }
-
         setIsLoading(false);
       })
       .catch(err => {
@@ -52,11 +59,9 @@ const CatalogPage = () => {
     if (categoryParam) setSelectedCategory(categoryParam);
   }, [location]);
 
-  // ── FIX 2: always use p.categoryName (the real API field) ──
   const getCategoryName = (p) =>
     p.categoryName || p.category?.name || p.category || '';
 
-  // ── FIX 3: consistent filter ──
   const filteredProducts = products.filter(p => {
     if (selectedCategory !== 'All') {
       const cat = getCategoryName(p);
@@ -93,6 +98,7 @@ const CatalogPage = () => {
     }
     localStorage.setItem('cart', JSON.stringify(cart));
     setAddedToCart({ [product.id]: true });
+    showToast(`${product.name} ajouté au panier !`, 'success');
     setTimeout(() => setAddedToCart({}), 1500);
   };
 
@@ -100,9 +106,19 @@ const CatalogPage = () => {
     e.stopPropagation();
     const favs = JSON.parse(localStorage.getItem('favorites') || '[]');
     const exists = favs.some(item => item.id === product.id);
-    const newFavs = exists
-      ? favs.filter(item => item.id !== product.id)
-      : [...favs, product];
+    let newFavs;
+    let message;
+    
+    if (exists) {
+      newFavs = favs.filter(item => item.id !== product.id);
+      message = `${product.name} retiré des favoris ❌`;
+      showToast(message, 'info');
+    } else {
+      newFavs = [...favs, product];
+      message = `${product.name} ajouté aux favoris ❤️`;
+      showToast(message, 'success');
+    }
+    
     localStorage.setItem('favorites', JSON.stringify(newFavs));
     setFavorites(newFavs);
     setAddedToFavorites({ [product.id]: !exists });
@@ -116,11 +132,9 @@ const CatalogPage = () => {
     navigate(`/product/${id}`);
   };
 
-  // ── FIX 4: count per category uses getCategoryName ──
   const countByCategory = (catName) =>
     products.filter(p => getCategoryName(p).toLowerCase() === catName.toLowerCase()).length;
 
-  // ── FIX 5: star rating from real API data ──
   const renderStars = (rate = 0) =>
     [1, 2, 3, 4, 5].map(i => (
       <i
@@ -147,6 +161,7 @@ const CatalogPage = () => {
     @keyframes slideIn { from{opacity:0;transform:translateX(-20px)} to{opacity:1;transform:translateX(0)} }
     @keyframes heartBeat{ 0%,100%{transform:scale(1)} 50%{transform:scale(1.3)} }
     @keyframes pulse   { 0%,100%{transform:scale(1)} 50%{transform:scale(1.1)} }
+    @keyframes toastSlideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 
     .product-card {
       animation: fadeIn 0.5s ease-out backwards;
@@ -213,15 +228,38 @@ const CatalogPage = () => {
       display:flex; align-items:center; justify-content:center; gap:6px; border:none;
     }
 
-    /* ── FIX 6: image container keeps consistent height ── */
     .product-img {
       width:100%; height:100%; object-fit:contain;
       transition:transform 0.4s ease;
     }
     .product-card:hover .product-img { transform:scale(1.06); }
+
+    .toast-notification {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      background: #1A2B3C;
+      color: white;
+      padding: 14px 24px;
+      border-radius: 12px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+      z-index: 1000;
+      animation: toastSlideIn 0.3s ease-out;
+      font-weight: 600;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      backdrop-filter: blur(8px);
+      background: rgba(26,43,60,0.95);
+      border-left: 4px solid #3182CE;
+    }
+    
+    .toast-notification.success { border-left-color: #27ae60; }
+    .toast-notification.info { border-left-color: #3182CE; }
+    .toast-notification.error { border-left-color: #e74c3c; }
   `;
 
-  /* ────────── LOADING ────────── */
   if (isLoading) {
     return (
       <>
@@ -245,14 +283,20 @@ const CatalogPage = () => {
     );
   }
 
-  /* ────────── RENDER ────────── */
   return (
     <>
       <style>{styles}</style>
 
-      <div style={{ display:'flex', gap:'30px', padding:'40px', backgroundColor:'#F7FAFC', minHeight:'80vh' }}>
+      {/* Toast Notification */}
+      {toast.show && (
+        <div className={`toast-notification ${toast.type}`}>
+          <i className={`fas ${toast.type === 'success' ? 'fa-heart' : toast.type === 'info' ? 'fa-trash-alt' : 'fa-exclamation-circle'}`}></i>
+          {toast.message}
+        </div>
+      )}
 
-        {/* ── SIDEBAR ── */}
+      <div style={{ display:'flex', gap:'30px', padding:'40px', backgroundColor:'#F7FAFC', minHeight:'80vh' }}>
+        {/* Sidebar - same as before */}
         <aside
           className="scrollbar-custom"
           style={{
@@ -272,7 +316,6 @@ const CatalogPage = () => {
               <i className="fas fa-tag" style={{ marginRight:'8px' }} /> CATÉGORIES
             </h3>
 
-            {/* All */}
             <div
               onClick={() => setSelectedCategory('All')}
               className="category-item"
@@ -304,7 +347,6 @@ const CatalogPage = () => {
               >
                 <i className="fas fa-folder" style={{ marginRight:'10px', width:'20px' }} />
                 {cat.name}
-                {/* FIX: count uses getCategoryName */}
                 <span style={{ float:'right', fontSize:'12px', opacity:0.7 }}>
                   {countByCategory(cat.name)}
                 </span>
@@ -324,10 +366,9 @@ const CatalogPage = () => {
           </div>
         </aside>
 
-        {/* ── MAIN ── */}
+        {/* Main content */}
         <div style={{ flex:1 }}>
-
-          {/* Search / sort bar */}
+          {/* Search/sort bar */}
           <div style={{ backgroundColor:'white', borderRadius:'20px', padding:'20px 25px', marginBottom:'30px', boxShadow:'0 5px 15px rgba(0,0,0,0.05)' }}>
             <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', flexWrap:'wrap', gap:'15px' }}>
               <div>
@@ -340,7 +381,6 @@ const CatalogPage = () => {
               </div>
 
               <div style={{ display:'flex', gap:'12px', alignItems:'center', flexWrap:'wrap' }}>
-                {/* Search */}
                 <div style={{ position:'relative' }}>
                   <i className="fas fa-search" style={{ position:'absolute', left:'15px', top:'50%', transform:'translateY(-50%)', color:'#4A5568' }} />
                   <input
@@ -353,7 +393,6 @@ const CatalogPage = () => {
                   />
                 </div>
 
-                {/* Sort */}
                 <select
                   value={sortBy}
                   onChange={e => setSortBy(e.target.value)}
@@ -366,7 +405,6 @@ const CatalogPage = () => {
                   <option value="name-desc">Nom Z → A</option>
                 </select>
 
-                {/* View toggle */}
                 <div style={{ display:'flex', border:'2px solid #E2E8F0', borderRadius:'12px', overflow:'hidden' }}>
                   {['grid','list'].map(mode => (
                     <button
@@ -382,7 +420,7 @@ const CatalogPage = () => {
             </div>
           </div>
 
-          {/* Products */}
+          {/* Products display (same logic, but we keep as before) */}
           {sortedProducts.length > 0 ? (
             viewMode === 'grid' ? (
               <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(280px,1fr))', gap:'25px' }}>
@@ -395,7 +433,6 @@ const CatalogPage = () => {
                     onMouseLeave={() => setHoveredProduct(null)}
                     onClick={(e) => handleViewDetails(p.id, e)}
                   >
-                    {/* Favorite btn */}
                     <button
                       className={`favorite-heart ${addedToFavorites[p.id] !== undefined ? 'heart-beat' : ''}`}
                       onClick={(e) => handleAddToFavorites(p, e)}
@@ -404,16 +441,13 @@ const CatalogPage = () => {
                       <i className="fas fa-heart" />
                     </button>
 
-                    {/* Low stock badge */}
                     {p.stock != null && p.stock < 10 && (
                       <div style={{ position:'absolute', top:'15px', left:'15px', background:'#FF4444', color:'white', padding:'4px 12px', borderRadius:'20px', fontSize:'10px', fontWeight:'800', zIndex:2 }}>
                         DERNIÈRES PIÈCES
                       </div>
                     )}
 
-                    {/* Image */}
                     <div style={{ height:'220px', padding:'25px', backgroundColor:'#F7FAFC', display:'flex', alignItems:'center', justifyContent:'center', overflow:'hidden' }}>
-                      {/* FIX: use p.imageUrl directly */}
                       <img
                         src={p.imageUrl}
                         alt={p.name}
@@ -422,9 +456,7 @@ const CatalogPage = () => {
                       />
                     </div>
 
-                    {/* Content */}
                     <div style={{ padding:'20px' }}>
-                      {/* FIX: getCategoryName helper */}
                       <span style={{ fontSize:'10px', color:'#3182CE', fontWeight:'800', textTransform:'uppercase', letterSpacing:'1px' }}>
                         {getCategoryName(p) || 'PRODUIT'}
                       </span>
@@ -435,7 +467,6 @@ const CatalogPage = () => {
                         {p.price?.toFixed(2)} DH
                       </div>
 
-                      {/* FIX: real rating from API (ratingRate / ratingCount) */}
                       <div style={{ display:'flex', alignItems:'center', gap:'6px', marginBottom:'14px' }}>
                         <div style={{ display:'flex', gap:'2px' }}>
                           {renderStars(p.ratingRate)}
@@ -445,7 +476,6 @@ const CatalogPage = () => {
                         </span>
                       </div>
 
-                      {/* Action buttons */}
                       <div className="action-buttons">
                         <button
                           className="action-btn btn-catalog"
@@ -468,9 +498,7 @@ const CatalogPage = () => {
                   </div>
                 ))}
               </div>
-
             ) : (
-              /* ── LIST VIEW ── */
               <div style={{ display:'flex', flexDirection:'column', gap:'15px' }}>
                 {sortedProducts.map((p, index) => (
                   <div
@@ -479,7 +507,6 @@ const CatalogPage = () => {
                     style={{ backgroundColor:'white', borderRadius:'15px', padding:'20px', display:'flex', gap:'20px', alignItems:'center', animationDelay:`${index * 0.05}s`, position:'relative' }}
                     onClick={e => handleViewDetails(p.id, e)}
                   >
-                    {/* Favorite */}
                     <button
                       onClick={e => handleAddToFavorites(p, e)}
                       style={{ position:'absolute', top:'15px', right:'15px', background:'none', border:'none', fontSize:'22px', cursor:'pointer', color: isFavorite(p.id) ? '#FF4444' : '#ccc', transition:'all 0.3s' }}
@@ -487,7 +514,6 @@ const CatalogPage = () => {
                       <i className="fas fa-heart" />
                     </button>
 
-                    {/* Thumbnail */}
                     <div style={{ width:'100px', height:'100px', backgroundColor:'#F7FAFC', borderRadius:'12px', display:'flex', alignItems:'center', justifyContent:'center', padding:'10px', flexShrink:0 }}>
                       <img
                         src={p.imageUrl}
@@ -533,7 +559,6 @@ const CatalogPage = () => {
               </div>
             )
           ) : (
-            /* ── EMPTY STATE ── */
             <div style={{ textAlign:'center', padding:'80px', backgroundColor:'white', borderRadius:'20px' }}>
               <i className="fas fa-box-open" style={{ fontSize:'64px', color:'#4A5568', marginBottom:'20px' }} />
               <h3 style={{ fontSize:'24px', color:'#1A2B3C', marginBottom:'10px' }}>Aucun produit trouvé</h3>

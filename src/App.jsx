@@ -16,6 +16,7 @@ import ProfilePage from './pages/ProfilePage';
 import OrdersPage from './pages/OrdersPage';
 import NotFound from './pages/NotFound';
 import AboutPage  from './pages/AboutPage';
+import FavoritePage from'./pages/FavoritePage';
 function App() {
   return (
     <Router>
@@ -32,7 +33,7 @@ function App() {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/about" element={<AboutPage />} />
-            
+            <Route path="/favorites" element={<FavoritePage />} />
             {/* Routes privées (exemple) */}
             <Route path="/cart" element={<CartPage />} />
             <Route path="/profile" element={<ProfilePage />} />
