@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { productService } from '../services/productService';
 import { categoryService } from '../services/categoryService';
 
+
 const CatalogPage = () => {
   const [products, setProducts]               = useState([]);
   const [categories, setCategories]           = useState([]);
@@ -31,33 +32,80 @@ const CatalogPage = () => {
   };
 
   useEffect(() => {
-    Promise.all([
-      productService.getAll(),
-      categoryService.getAll()
-    ])
-      .then(([productsData, categoriesData]) => {
-        const prods = productsData || [];
-        setProducts(prods);
-        if (categoriesData && categoriesData.length > 0) {
+  const loadData = async () => {
+    try {
+      setIsLoading(true);
+
+      // Load products independently
+      const productsData = await productService.getAll();
+
+      console.log("Products response:", productsData);
+
+      let prods = [];
+
+      if (Array.isArray(productsData)) {
+        prods = productsData;
+      } else if (productsData?.products) {
+        prods = productsData.products;
+      } else if (productsData?.data) {
+        prods = productsData.data;
+      }
+
+      console.log("Normalized products:", prods);
+
+      setProducts(prods);
+
+      // Load categories separately
+      try {
+        const categoriesData = await categoryService.getAll();
+
+        if (Array.isArray(categoriesData) && categoriesData.length > 0) {
           setCategories(categoriesData);
         } else {
-          const unique = [...new Set(prods.map(p => p.categoryName).filter(Boolean))];
+          const unique = [
+            ...new Set(
+              prods.map(p => p.categoryName).filter(Boolean)
+            )
+          ];
+
           setCategories(unique.map(name => ({ name })));
         }
-        setIsLoading(false);
-      })
-      .catch(err => {
-        console.error('Erreur chargement catalogue:', err);
-        setIsLoading(false);
-      });
+      } catch (categoryError) {
+        console.error("Category API failed:", categoryError);
 
-    const savedFavorites = JSON.parse(localStorage.getItem('favorites') || '[]');
-    setFavorites(savedFavorites);
+        // fallback categories from products
+        const unique = [
+          ...new Set(
+            prods.map(p => p.categoryName).filter(Boolean)
+          )
+        ];
 
-    const params = new URLSearchParams(location.search);
-    const categoryParam = params.get('category');
-    if (categoryParam) setSelectedCategory(categoryParam);
-  }, [location]);
+        setCategories(unique.map(name => ({ name })));
+      }
+
+    } catch (error) {
+      console.error("Products API failed:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  loadData();
+
+  const savedFavorites = JSON.parse(
+    localStorage.getItem('favorites') || '[]'
+  );
+
+  setFavorites(savedFavorites);
+
+  const params = new URLSearchParams(location.search);
+  const categoryParam = params.get('category');
+
+  if (categoryParam) {
+    setSelectedCategory(categoryParam);
+  }
+
+}, [location]);
 
   const getCategoryName = (p) =>
     p.categoryName || p.category?.name || p.category || '';
