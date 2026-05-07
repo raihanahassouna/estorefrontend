@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { profileService } from '../services/profileService';
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -31,7 +32,27 @@ export default function LoginPage() {
         throw new Error(data.message || "Identifiants incorrects.");
       }
 
-      localStorage.setItem("token", data.token);
+      localStorage.setItem("user", data.token);
+
+      // If the login response includes user info, persist it locally
+      if (data.user) {
+        try { localStorage.setItem('user', JSON.stringify(data.user)); } catch (e) {}
+      }
+
+      // Attempt to fetch or create an empty profile for the user
+      try {
+        await profileService.get();
+      } catch (err) {
+        // If not found (404), create an empty profile record (backend should link it to the authenticated user)
+        if (err?.response?.status === 404) {
+          try {
+            await profileService.update({ phone: null, address: null, city: null, country: null, avatarUrl: null });
+          } catch (e) {
+            // ignore creation errors; not critical for login flow
+          }
+        }
+      }
+
       setSuccess(true);
     } catch (err) {
       setError(err.message || "Une erreur est survenue. Veuillez réessayer.");

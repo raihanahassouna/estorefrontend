@@ -15,7 +15,7 @@ import RegisterPage from './pages/RegisterPage';
 import ProfilePage from './pages/ProfilePage';
 import OrdersPage from './pages/OrdersPage';
 import NotFound from './pages/NotFound';
-
+import AboutPage  from './pages/AboutPage';
 function App() {
   return (
     <Router>
@@ -31,6 +31,7 @@ function App() {
             <Route path="/product/:id" element={<ProductDetailPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
+            <Route path="/about" element={<AboutPage />} />
             
             {/* Routes privées (exemple) */}
             <Route path="/cart" element={<CartPage />} />

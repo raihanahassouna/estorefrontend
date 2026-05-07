@@ -432,7 +432,7 @@ const CatalogPage = () => {
                         {p.name}
                       </h3>
                       <div style={{ fontSize:'24px', fontWeight:'900', color:'#3182CE', marginBottom:'8px' }}>
-                        {p.price?.toFixed(2)} €
+                        {p.price?.toFixed(2)} DH
                       </div>
 
                       {/* FIX: real rating from API (ratingRate / ratingCount) */}
@@ -506,7 +506,7 @@ const CatalogPage = () => {
                         {p.description?.substring(0, 120)}…
                       </p>
                       <div style={{ display:'flex', gap:'15px', alignItems:'center', flexWrap:'wrap' }}>
-                        <div style={{ fontSize:'20px', fontWeight:'900', color:'#3182CE' }}>{p.price?.toFixed(2)} €</div>
+                        <div style={{ fontSize:'20px', fontWeight:'900', color:'#3182CE' }}>{p.price?.toFixed(2)} DH</div>
                         <div style={{ display:'flex', gap:'2px' }}>{renderStars(p.ratingRate)}</div>
                         <span style={{ fontSize:'11px', color:'#4A5568' }}>({p.ratingCount ?? 0})</span>
                       </div>

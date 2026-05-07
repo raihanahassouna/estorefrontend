@@ -9,6 +9,7 @@ const HomePage = () => {
   const [hoveredCard, setHoveredCard] = useState(null);
   const [showNewsletter, setShowNewsletter] = useState(false);
   const [email, setEmail] = useState('');
+  
 
   useEffect(() => {
     productService.getAll().then(data => {
