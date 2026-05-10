@@ -17,6 +17,7 @@ import OrdersPage from './pages/OrdersPage';
 import NotFound from './pages/NotFound';
 import AboutPage  from './pages/AboutPage';
 import FavoritePage from'./pages/FavoritePage';
+import AdminDashboard from './pages/AdminDashboard';
 function App() {
   return (
     <Router>
@@ -38,6 +39,7 @@ function App() {
             <Route path="/cart" element={<CartPage />} />
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/orders" element={<OrdersPage />} />
+            <Route path="/admin" element={<AdminDashboard />} />
 
             {/* Page 404 - Doit toujours être en dernier */}
             <Route path="*" element={<NotFound />} />

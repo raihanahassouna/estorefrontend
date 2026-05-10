@@ -1,16 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { productService } from '../services/productService';
-import { categoryService } from '../services/categoryService';
+import { useProducts } from '../contexts/ProductsContext';
 
 
 const CatalogPage = () => {
-  const [products, setProducts]               = useState([]);
+  const { products } = useProducts();
   const [categories, setCategories]           = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [searchTerm, setSearchTerm]           = useState('');
   const [sortBy, setSortBy]                   = useState('default');
-  const [isLoading, setIsLoading]             = useState(true);
+  const [isLoading, setIsLoading]             = useState(false);
   const [viewMode, setViewMode]               = useState('grid');
   const [hoveredProduct, setHoveredProduct]   = useState(null);
   const [addedToCart, setAddedToCart]         = useState({});
@@ -32,80 +31,17 @@ const CatalogPage = () => {
   };
 
   useEffect(() => {
-  const loadData = async () => {
-    try {
-      setIsLoading(true);
+    // derive categories from products
+    const unique = [ ...new Set(products.map(p => p.categoryName || p.category?.name || p.category).filter(Boolean)) ];
+    setCategories(unique.map(name => ({ name })));
 
-      // Load products independently
-      const productsData = await productService.getAll();
+    const savedFavorites = JSON.parse(localStorage.getItem('favorites') || '[]');
+    setFavorites(savedFavorites);
 
-      console.log("Products response:", productsData);
-
-      let prods = [];
-
-      if (Array.isArray(productsData)) {
-        prods = productsData;
-      } else if (productsData?.products) {
-        prods = productsData.products;
-      } else if (productsData?.data) {
-        prods = productsData.data;
-      }
-
-      console.log("Normalized products:", prods);
-
-      setProducts(prods);
-
-      // Load categories separately
-      try {
-        const categoriesData = await categoryService.getAll();
-
-        if (Array.isArray(categoriesData) && categoriesData.length > 0) {
-          setCategories(categoriesData);
-        } else {
-          const unique = [
-            ...new Set(
-              prods.map(p => p.categoryName).filter(Boolean)
-            )
-          ];
-
-          setCategories(unique.map(name => ({ name })));
-        }
-      } catch (categoryError) {
-        console.error("Category API failed:", categoryError);
-
-        // fallback categories from products
-        const unique = [
-          ...new Set(
-            prods.map(p => p.categoryName).filter(Boolean)
-          )
-        ];
-
-        setCategories(unique.map(name => ({ name })));
-      }
-
-    } catch (error) {
-      console.error("Products API failed:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  loadData();
-
-  const savedFavorites = JSON.parse(
-    localStorage.getItem('favorites') || '[]'
-  );
-
-  setFavorites(savedFavorites);
-
-  const params = new URLSearchParams(location.search);
-  const categoryParam = params.get('category');
-
-  if (categoryParam) {
-    setSelectedCategory(categoryParam);
-  }
-
-}, [location]);
+    const params = new URLSearchParams(location.search);
+    const categoryParam = params.get('category');
+    if (categoryParam) setSelectedCategory(categoryParam);
+  }, [location, products]);
 
   const getCategoryName = (p) =>
     p.categoryName || p.category?.name || p.category || '';

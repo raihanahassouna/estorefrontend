@@ -24,4 +24,10 @@ export const productService = {
 
   // Synchronisation avec FakeStore (Utile pour ton bouton d'admin)
   sync: () => api.post("/products/sync").then((r) => r.data),
+  // Create product (fallback depends on API)
+  create: (product) => api.post('/products', product).then(r => r.data),
+  // Update product
+  update: (id, updates) => api.put(`/products/${id}`, updates).then(r => r.data),
+  // Delete product
+  remove: (id) => api.delete(`/products/${id}`).then(r => r.data),
 };
