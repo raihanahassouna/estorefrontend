@@ -6,26 +6,29 @@ const Header = () => {
   const [cartCount, setCartCount] = useState(0);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [showAdminModal, setShowAdminModal] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
-    // Récupérer le nombre d'articles dans le panier
+    // Vérifier token utilisateur classique
+    const token = localStorage.getItem('token');
+    setIsLoggedIn(!!token);
+
+    // Vérifier si l'admin est connecté
+    const adminToken = localStorage.getItem('adminToken');
+    setIsAdmin(!!adminToken);
+
+    // Nombre d'articles dans le panier
     const updateCartCount = () => {
       const cart = JSON.parse(localStorage.getItem('cart') || '[]');
       const count = cart.reduce((total, item) => total + (item.quantity || 1), 0);
       setCartCount(count);
     };
-
     updateCartCount();
     window.addEventListener('storage', updateCartCount);
-    
-    // Vérifier si l'utilisateur est connecté
-    const token = localStorage.getItem('token');
-    setIsLoggedIn(!!token);
 
     // Effet de scroll
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50);
-    };
+    const handleScroll = () => setIsScrolled(window.scrollY > 50);
     window.addEventListener('scroll', handleScroll);
 
     return () => {
@@ -39,6 +42,26 @@ const Header = () => {
     localStorage.removeItem('user');
     setIsLoggedIn(false);
     navigate('/');
+  };
+
+  const handleAdminLogout = () => {
+    localStorage.removeItem('adminToken');
+    setIsAdmin(false);
+    navigate('/');
+  };
+
+  const handleAdminClick = () => {
+    if (isAdmin) {
+      navigate('/admin');
+    } else {
+      setShowAdminModal(true);
+    }
+  };
+
+  const handleAdminLoginSuccess = () => {
+    setIsAdmin(true);
+    setShowAdminModal(false);
+    navigate('/admin');
   };
 
   const styles = `
@@ -108,6 +131,7 @@ const Header = () => {
       color: #3182CE;
       transition: all 0.3s ease;
       letter-spacing: 0.5px;
+      cursor: pointer;
     }
     
     .btn-outline:hover {
@@ -178,43 +202,152 @@ const Header = () => {
     }
   `;
 
+  // Composant modal interne pour la connexion admin
+  const AdminLoginModal = ({ onClose, onSuccess }) => {
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [error, setError] = useState('');
+
+    const handleSubmit = (e) => {
+      e.preventDefault();
+      // Identifiants administrateur (à adapter selon votre backend)
+      if (email === 'admin@estore.com' && password === 'admin123') {
+        localStorage.setItem('adminToken', 'fake-admin-jwt-token');
+        onSuccess();
+      } else {
+        setError('Email ou mot de passe incorrect');
+      }
+    };
+
+    return (
+      <div
+        style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(0,0,0,0.6)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1300,
+        }}
+        onClick={onClose}
+      >
+        <div
+          style={{
+            background: 'white',
+            borderRadius: 20,
+            padding: 30,
+            width: 400,
+            maxWidth: '90%',
+            boxShadow: '0 20px 40px rgba(0,0,0,0.2)',
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <h2 style={{ marginTop: 0, color: '#1A2B3C' }}>
+            <i className="fas fa-lock" style={{ marginRight: 10, color: '#3182CE' }}></i>
+            Accès Administrateur
+          </h2>
+          <form onSubmit={handleSubmit}>
+            <div style={{ marginBottom: 15 }}>
+              <label style={{ display: 'block', marginBottom: 6, fontWeight: 600 }}>Email</label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                style={{
+                  width: '100%',
+                  padding: 12,
+                  borderRadius: 12,
+                  border: '1px solid #CBD5E0',
+                  fontSize: 14,
+                }}
+                placeholder="admin@estore.com"
+              />
+            </div>
+            <div style={{ marginBottom: 20 }}>
+              <label style={{ display: 'block', marginBottom: 6, fontWeight: 600 }}>Mot de passe</label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                style={{
+                  width: '100%',
+                  padding: 12,
+                  borderRadius: 12,
+                  border: '1px solid #CBD5E0',
+                  fontSize: 14,
+                }}
+                placeholder="••••••"
+              />
+            </div>
+            {error && (
+              <div style={{ color: '#E53E3E', marginBottom: 15, fontSize: 14 }}>{error}</div>
+            )}
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
+              <button
+                type="button"
+                onClick={onClose}
+                style={{
+                  padding: '10px 18px',
+                  borderRadius: 10,
+                  background: '#EDF2F7',
+                  border: 'none',
+                  cursor: 'pointer',
+                }}
+              >
+                Annuler
+              </button>
+              <button
+                type="submit"
+                style={{
+                  padding: '10px 18px',
+                  borderRadius: 10,
+                  background: '#3182CE',
+                  color: 'white',
+                  border: 'none',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                }}
+              >
+                Se connecter
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <>
       <style>{styles}</style>
-      
-      <header style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        padding: isScrolled ? '15px 40px' : '20px 40px',
-        backgroundColor: '#F7FAFC',
-        borderBottom: '1px solid #E2E8F0',
-        position: 'sticky',
-        top: 0,
-        zIndex: 100,
-        transition: 'all 0.3s ease',
-        boxShadow: isScrolled ? '0 5px 20px rgba(0,0,0,0.05)' : 'none'
-      }} className={isScrolled ? 'header-scrolled' : ''}>
-        
+
+      <header
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          padding: isScrolled ? '15px 40px' : '20px 40px',
+          backgroundColor: '#F7FAFC',
+          borderBottom: '1px solid #E2E8F0',
+          position: 'sticky',
+          top: 0,
+          zIndex: 100,
+          transition: 'all 0.3s ease',
+          boxShadow: isScrolled ? '0 5px 20px rgba(0,0,0,0.05)' : 'none',
+        }}
+        className={isScrolled ? 'header-scrolled' : ''}
+      >
         {/* Logo */}
-        <Link to="/" className="logo" style={{
-          textDecoration: 'none',
-          color: '#1A2B3C',
-          fontSize: '24px',
-          fontWeight: '900',
-          letterSpacing: '-0.5px',
-          position: 'relative'
-        }}>
+        <Link to="/" className="logo" style={{ textDecoration: 'none', color: '#1A2B3C', fontSize: '24px', fontWeight: '900', letterSpacing: '-0.5px', position: 'relative' }}>
           VotrE<span style={{ color: '#3182CE' }}>Boutique</span>™
           <div className="logo-glow"></div>
         </Link>
-        
+
         {/* Navigation */}
-        <nav style={{
-          display: 'flex',
-          gap: '35px',
-          alignItems: 'center'
-        }}>
+        <nav style={{ display: 'flex', gap: '35px', alignItems: 'center' }}>
           <Link to="/" className="nav-link">
             <i className="fas fa-home" style={{ marginRight: '6px', fontSize: '12px' }}></i>
             ACCUEIL
@@ -234,16 +367,15 @@ const Header = () => {
         </nav>
 
         {/* Actions */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '15px'
-        }}>
-          <Link
-            to="/cart"
-            className="btn-outline"
-            style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
-          >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+          {/* Bouton Admin */}
+          <button onClick={handleAdminClick} className="btn-outline">
+            <i className="fas fa-user-shield" style={{ marginRight: '6px' }}></i>
+            ADMIN
+          </button>
+
+          {/* Panier */}
+          <Link to="/cart" className="btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <i className="fas fa-shopping-cart cart-icon"></i>
             PANIER
             {cartCount > 0 && (
@@ -252,7 +384,8 @@ const Header = () => {
               </span>
             )}
           </Link>
-          
+
+          {/* Connexion / Profil */}
           {isLoggedIn ? (
             <>
               <Link to="/profile" className="nav-link" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -278,6 +411,14 @@ const Header = () => {
           )}
         </div>
       </header>
+
+      {/* Modal de connexion admin */}
+      {showAdminModal && (
+        <AdminLoginModal
+          onClose={() => setShowAdminModal(false)}
+          onSuccess={handleAdminLoginSuccess}
+        />
+      )}
     </>
   );
 };

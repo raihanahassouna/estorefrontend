@@ -18,6 +18,11 @@ import NotFound from './pages/NotFound';
 import AboutPage  from './pages/AboutPage';
 import FavoritePage from'./pages/FavoritePage';
 import AdminDashboard from './pages/AdminDashboard';
+const AdminRoute = ({ children }) => {
+  const adminToken = localStorage.getItem('adminToken');
+  return adminToken ? children : <Navigate to="/" replace />;
+};
+
 function App() {
   return (
     <Router>
@@ -40,7 +45,14 @@ function App() {
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/orders" element={<OrdersPage />} />
             <Route path="/admin" element={<AdminDashboard />} />
-
+ <Route
+          path="/admin"
+          element={
+            <AdminRoute>
+              <AdminDashboard />
+            </AdminRoute>
+          }
+        />
             {/* Page 404 - Doit toujours être en dernier */}
             <Route path="*" element={<NotFound />} />
           </Routes>
