@@ -7,7 +7,7 @@ import ProductModal from '../components/ProductModal';
 import OrdersList from '../components/OrdersList';
 
 const AdminDashboard = () => {
-  const { products, addProduct, editProduct, deleteProduct, stats, orders, updateOrderStatus } = useProducts();
+  const { products, addProduct, editProduct, deleteProduct, stats, orders, updateOrderStatus, validateOrder, lowStockProducts } = useProducts();
   const [showAdd, setShowAdd] = useState(false);
   const [editing, setEditing] = useState(null);
 
@@ -39,9 +39,33 @@ const AdminDashboard = () => {
           </div>
         </div>
 
-        <div style={{ background:'white', padding:20, borderRadius:16, boxShadow:'0 5px 15px rgba(0,0,0,0.05)' }}>
-          <h2 style={{ marginTop:0 }}>Gestion des commandes</h2>
-          <OrdersList orders={orders} onUpdateStatus={updateOrderStatus} />
+        <div style={{ display:'grid', gridTemplateColumns:'1fr 360px', gap:20 }}>
+          <div style={{ background:'white', padding:20, borderRadius:16, boxShadow:'0 5px 15px rgba(0,0,0,0.05)' }}>
+            <h2 style={{ marginTop:0 }}>Gestion des commandes</h2>
+            <OrdersList orders={orders} onUpdateStatus={updateOrderStatus} onValidate={validateOrder} />
+          </div>
+
+          <div style={{ background:'white', padding:20, borderRadius:16, boxShadow:'0 5px 15px rgba(0,0,0,0.05)' }}>
+            <h3 style={{ marginTop:0 }}>Alertes inventaire</h3>
+            <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+              {lowStockProducts().length === 0 ? (
+                <div style={{ color:'#4A5568' }}>Aucun produit en rupture ou faible stock.</div>
+              ) : (
+                lowStockProducts().map(p => (
+                  <div key={p.id} style={{ display:'flex', justifyContent:'space-between', alignItems:'center', gap:8 }}>
+                    <div style={{ display:'flex', gap:8, alignItems:'center' }}>
+                      <img src={p.imageUrl} alt={p.name} style={{ width:48, height:48, objectFit:'cover', borderRadius:6 }} onError={(e)=>e.target.src='https://via.placeholder.com/48'} />
+                      <div>
+                        <div style={{ fontWeight:800 }}>{p.name}</div>
+                        <div style={{ color:'#4A5568', fontSize:12 }}>{p.price?.toFixed ? `${p.price.toFixed(2)} DH` : p.price}</div>
+                      </div>
+                    </div>
+                    <div style={{ fontWeight:900, color: Number(p.stock ?? p.quantity ?? 0) <= 0 ? '#E53E3E' : '#D97706' }}>{Number(p.stock ?? p.quantity ?? 0)}</div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
         </div>
       </div>
 

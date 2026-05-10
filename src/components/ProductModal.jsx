@@ -5,7 +5,8 @@ const ProductModal = ({ product, onClose, onSave }) => {
     name: '',
     description: '',
     price: '',
-    image: null
+    image: null,
+    stock: ''
   });
 
   const [preview, setPreview] = useState('');
@@ -15,8 +16,9 @@ const ProductModal = ({ product, onClose, onSave }) => {
       setValues({
         name: product.name || '',
         description: product.description || '',
-        price: product.price || '',
-        image: null
+          price: product.price || '',
+          image: null,
+          stock: product.stock ?? product.quantity ?? ''
       });
 
       setPreview(product.imageUrl || '');
@@ -49,6 +51,7 @@ const ProductModal = ({ product, onClose, onSave }) => {
     onSave({
       ...values,
       price: Number(values.price) || 0,
+      stock: Number(values.stock) || 0,
       imageUrl: preview
     });
   };
@@ -103,6 +106,18 @@ const ProductModal = ({ product, onClose, onSave }) => {
             placeholder="Prix"
             value={values.price}
             onChange={handleChange('price')}
+            style={{
+              padding: 10,
+              borderRadius: 8,
+              border: '1px solid #E2E8F0'
+            }}
+          />
+
+          <input
+            type="number"
+            placeholder="Stock"
+            value={values.stock}
+            onChange={handleChange('stock')}
             style={{
               padding: 10,
               borderRadius: 8,

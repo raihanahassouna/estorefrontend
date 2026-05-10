@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useProducts } from '../contexts/ProductsContext';
 
 const CartPage = () => {
   const navigate = useNavigate();
@@ -20,7 +21,8 @@ const CartPage = () => {
     setCart(next);
   };
 
-  const handleWhatsAppOrder = () => {
+
+  const handleWhatsAppOrder = async () => {
     if (!cart || cart.length === 0) return;
 
     const getName = (item) => item.name || item.title || item.productName || 'Produit';
@@ -40,9 +42,86 @@ const CartPage = () => {
     const total = cart.reduce((s, it) => s + (getPrice(it) * getQty(it)), 0);
     const fmtTotal = Number.isInteger(total) ? `${total}` : total.toFixed(2);
 
-    const message = `Bonjour, je souhaite commander :\n\n${lines.join('\n')}\n\nTotal : ${fmtTotal} ${WHATSAPP_CURRENCY}`;
-    const url = `https://wa.me/${WHATSAPP_NUMBER.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(message)}`;
-    window.open(url, '_blank');
+    // Build order and check availability
+    const items = cart.map(it => ({ id: it.id, quantity: Number(it.quantity || 1) }));
+    const availability = checkAvailability(items);
+    if (availability.insufficient && availability.insufficient.length > 0) {
+      const msg = availability.insufficient.map(i => `ID ${i.id}: demandé ${i.requested}, disponible ${i.available}`).join('\n');
+      if (!confirm(`Certains articles sont en quantité insuffisante:\n${msg}\nSouhaitez-vous continuer et créer une commande en attente ?`)) return;
+    }
+
+    const order = { customerName: 'Client via WhatsApp', items, total };
+
+    // Open a blank window immediately to avoid popup blockers, then set its location after saving
+    const win = window.open('about:blank', '_blank');
+
+    try {
+      const created = await createOrder(order);
+
+      // Prepare WhatsApp message (use created.total if available)
+      const useTotal = typeof created.total === 'number' ? created.total : total;
+      const fmtUseTotal = Number.isInteger(useTotal) ? `${useTotal}` : useTotal.toFixed(2);
+      const message = `Bonjour, je souhaite commander :\n\n${lines.join('\n')}\n\nTotal : ${fmtUseTotal} ${WHATSAPP_CURRENCY}`;
+      const url = `https://wa.me/${WHATSAPP_NUMBER.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(message)}`;
+
+      // Navigate the previously opened window to WhatsApp (or open new if blocked)
+      if (win && !win.closed) {
+        try { win.location = url; } catch (e) { window.open(url, '_blank'); }
+      } else {
+        window.open(url, '_blank');
+      }
+
+      // clear cart
+      localStorage.removeItem('cart');
+      setCart([]);
+      try { window.dispatchEvent(new Event('storage')); } catch(e){}
+    } catch (e) {
+      console.error('Failed to create order before WhatsApp:', e);
+      if (win && !win.closed) win.close();
+      alert('Impossible d\'enregistrer la commande localement. Veuillez réessayer.');
+    }
+  };
+
+  const { createOrder, checkAvailability, products } = useProducts();
+
+  const handlePlaceOrder = async () => {
+    if (!cart || cart.length === 0) return;
+
+    // Build order items
+    const items = cart.map(it => ({ id: it.id, quantity: Number(it.quantity || 1) }));
+
+    // compute total locally from products in context (fallback to 0)
+    const total = items.reduce((sum, it) => {
+      const prod = products.find(p => String(p.id) === String(it.id));
+      const price = Number(prod?.price ?? 0);
+      return sum + price * (Number(it.quantity) || 0);
+    }, 0);
+
+    // Check availability and warn user if insufficient
+    const availability = checkAvailability(items);
+    if (availability.insufficient && availability.insufficient.length > 0) {
+      const msg = availability.insufficient.map(i => `ID ${i.id}: demandé ${i.requested}, disponible ${i.available}`).join('\n');
+      // simple alert for now
+      if (!confirm(`Certains articles sont en quantité insuffisante:\n${msg}\nSouhaitez-vous continuer et créer une commande en attente ?`)) return;
+    }
+
+    const order = {
+      customerName: 'Client anonyme',
+      items,
+      total
+    };
+
+    try {
+      const created = await createOrder(order);
+      // clear cart
+      localStorage.removeItem('cart');
+      setCart([]);
+      try { window.dispatchEvent(new Event('storage')); } catch(e){}
+      // navigate to orders page
+      navigate('/orders');
+    } catch (e) {
+      console.error('Order creation failed', e);
+    }
   };
 
   const increment = (id) => {
@@ -166,7 +245,7 @@ const CartPage = () => {
               <div style={{ height: 1, background: '#E2E8F0', margin: '6px 0 12px 0', borderRadius: 2 }} />
               <div style={{ color: '#4A5568', fontSize: 13 }}>Livraison estimée au moment du paiement</div>
               <div style={{ marginTop: 'auto', display: 'flex', gap: 10, flexDirection: 'column' }}>
-                <button className="btn-primary" style={{ width: '100%' }} onClick={() => navigate('/orders')}>Passer la commande</button>
+                <button className="btn-primary" style={{ width: '100%' }} onClick={handlePlaceOrder}>Passer la commande</button>
                 <button
                   className="whatsapp-btn"
                   style={{ width: '100%' }}

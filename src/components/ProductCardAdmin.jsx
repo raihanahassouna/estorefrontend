@@ -8,6 +8,10 @@ const ProductCardAdmin = ({ product, onEdit, onDelete }) => {
       </div>
       <div style={{ fontWeight:800, color:'#1A2B3C' }}>{product.name}</div>
       <div style={{ color:'#4A5568', fontSize:13, minHeight:40, overflow:'hidden' }}>{product.description}</div>
+      <div style={{ marginTop:6 }}>
+        <span style={{ fontSize:12, fontWeight:800, color:'#4A5568', marginRight:8 }}>Stock:</span>
+        <span style={{ fontWeight:900, color: product.stock <= 0 ? '#E53E3E' : '#1A2B3C' }}>{Number(product.stock ?? product.quantity ?? 0)}</span>
+      </div>
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginTop:6 }}>
         <div style={{ fontWeight:900, color:'#3182CE' }}>{product.price?.toFixed ? `${product.price.toFixed(2)} DH` : product.price}</div>
         <div style={{ display:'flex', gap:8 }}>
