@@ -31,7 +31,7 @@ export const ProductsProvider = ({ children }) => {
           const remoteIds = new Set(prods.map(p => String(p.id)));
           for (const p of saved) if (!remoteIds.has(String(p.id))) merged.unshift(p);
         }
-
+//jjj
         setProducts(merged);
         localStorage.setItem('products', JSON.stringify(merged));
       } catch (e) {
